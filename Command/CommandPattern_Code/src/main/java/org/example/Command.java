@@ -1,2 +1,5 @@
-package org.example;public class Command {
+package org.example;
+
+public interface Command {
+    void execute();
 }
