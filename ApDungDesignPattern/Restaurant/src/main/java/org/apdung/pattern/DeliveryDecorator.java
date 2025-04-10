@@ -1,6 +1,6 @@
 package org.apdung.pattern;
 
-public class DeliveryDecorator extends RiceDecorator{
+public class DeliveryDecorator extends FoodDecorator {
     public DeliveryDecorator(Food food) {
         super(food);
     }

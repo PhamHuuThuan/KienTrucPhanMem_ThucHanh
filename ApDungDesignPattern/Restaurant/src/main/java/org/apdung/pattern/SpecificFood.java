@@ -1,7 +1,7 @@
 package org.apdung.pattern;
 
-public class RiceFood extends  Food{
-    public RiceFood() {
+public class SpecificFood extends  Food{
+    public SpecificFood(String name) {
         description = "Rice";
     }
 

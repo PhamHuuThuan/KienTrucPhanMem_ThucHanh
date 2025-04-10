@@ -1,9 +1,9 @@
 package org.apdung.pattern;
 
-public abstract class RiceDecorator extends  RiceFood {
+public abstract class FoodDecorator extends SpecificFood {
     protected Food food;
 
-    public RiceDecorator(Food food) {
+    public FoodDecorator(Food food) {
         this.food = food;
     }
 

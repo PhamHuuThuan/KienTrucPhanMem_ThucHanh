@@ -2,7 +2,7 @@ package org.apdung.pattern;
 
 public class Main {
     public static void main(String[] args) {
-        Food food = new RiceFood();
+        Food food = new SpecificFood("Rice");
         System.out.println(food.getDescription());
 
         food = new DrinkDecorator(food);
