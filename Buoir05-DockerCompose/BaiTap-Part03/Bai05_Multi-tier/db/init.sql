@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS votes (
+    id SERIAL PRIMARY KEY,
+    vote TEXT NOT NULL
+);

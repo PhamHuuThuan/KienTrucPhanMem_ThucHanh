@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  vote:
+    build: ./vote
+    ports:
+      - "5000:80"
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  result:
+    build: ./result
+    ports:
+      - "5001:80"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  worker:
+    build: ./worker
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    networks:
+      - app-network
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: votes
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+volumes:
+  db-data:
+
+networks:
+  app-network:
