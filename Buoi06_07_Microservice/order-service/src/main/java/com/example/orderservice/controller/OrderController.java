@@ -41,7 +41,9 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest orderRequest) {
+        System.out.println(">>>>>>>>>>>>>HELLO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
         try {
+            System.out.println(">>>> Bat dau createOrder()");
             OrderResponse createdOrder = orderService.createOrder(orderRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
         } catch (EntityNotFoundException e) {

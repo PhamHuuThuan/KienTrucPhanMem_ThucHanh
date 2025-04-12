@@ -1,0 +1,12 @@
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\dto\OrderRequest.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\dto\ProductDto.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\OrderServiceApplication.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\model\OrderItem.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\service\OrderServiceImpl.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\dto\CustomerDto.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\controller\OrderController.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\service\OrderService.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\dto\OrderResponse.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\dto\OrderItemDto.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\model\Order.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\order-service\src\main\java\com\example\orderservice\repository\OrderRepository.java

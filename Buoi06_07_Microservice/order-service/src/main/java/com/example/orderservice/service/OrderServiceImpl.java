@@ -5,9 +5,11 @@ import com.example.orderservice.model.Order;
 import com.example.orderservice.model.OrderItem;
 import com.example.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -53,74 +56,109 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponse createOrder(OrderRequest orderRequest) {
+        log.info("Creating order for customer ID: {}", orderRequest.getCustomerId());
+        log.info("Customer service URL: {}", customerServiceUrl);
+        log.info("Product service URL: {}", productServiceUrl);
+
         // Validate customer exists
-        CustomerDto customer = webClientBuilder.build()
-                .get()
-                .uri(customerServiceUrl + "/api/customers/" + orderRequest.getCustomerId())
-                .retrieve()
-                .bodyToMono(CustomerDto.class)
-                .block();
+        try {
+            String customerUri = UriComponentsBuilder.fromUriString(customerServiceUrl)
+                    .path("/api/customers/" + orderRequest.getCustomerId())
+                    .build()
+                    .toUriString();
 
-        if (customer == null) {
-            throw new EntityNotFoundException("Customer not found with id: " + orderRequest.getCustomerId());
+            log.info("Calling customer service with URI: {}", customerUri);
+
+            CustomerDto customer = webClientBuilder.build()
+                    .get()
+                    .uri(customerUri)
+                    .retrieve()
+                    .bodyToMono(CustomerDto.class)
+                    .block();
+
+            if (customer == null) {
+                throw new EntityNotFoundException("Customer not found with id: " + orderRequest.getCustomerId());
+            }
+
+            Order order = new Order();
+            order.setCustomerId(orderRequest.getCustomerId());
+            order.setOrderDate(LocalDateTime.now());
+            order.setStatus("PENDING");
+
+            BigDecimal totalAmount = BigDecimal.ZERO;
+
+            List<OrderItem> orderItems = orderRequest.getOrderItems().stream()
+                    .map(itemDto -> {
+                        try {
+                            // Validate product exists and has enough inventory
+                            String productUri = UriComponentsBuilder.fromUriString(productServiceUrl)
+                                    .path("/api/products/" + itemDto.getProductId())
+                                    .toUriString();
+
+                            log.info("Calling product service with URI: {}", productUri);
+
+                            ProductDto product = webClientBuilder.build()
+                                    .get()
+                                    .uri(productUri)
+                                    .retrieve()
+                                    .bodyToMono(ProductDto.class)
+                                    .block();
+
+                            if (product == null) {
+                                throw new EntityNotFoundException(
+                                        "Product not found with id: " + itemDto.getProductId());
+                            }
+
+                            if (product.getQuantity() < itemDto.getQuantity()) {
+                                throw new IllegalArgumentException(
+                                        "Not enough inventory for product: " + product.getName());
+                            }
+
+                            // Update product inventory
+                            product.setQuantity(product.getQuantity() - itemDto.getQuantity());
+
+                            String updateProductUri = UriComponentsBuilder.fromUriString(productServiceUrl)
+                                    .path("/api/products/" + product.getId())
+                                    .toUriString();
+
+                            webClientBuilder.build()
+                                    .put()
+                                    .uri(updateProductUri)
+                                    .bodyValue(product)
+                                    .retrieve()
+                                    .bodyToMono(ProductDto.class)
+                                    .block();
+
+                            OrderItem orderItem = new OrderItem();
+                            orderItem.setProductId(itemDto.getProductId());
+                            orderItem.setQuantity(itemDto.getQuantity());
+                            orderItem.setPrice(product.getPrice());
+                            orderItem.setOrder(order);
+
+                            return orderItem;
+                        } catch (Exception e) {
+                            log.error("Error processing order item for product ID {}: {}", itemDto.getProductId(),
+                                    e.getMessage());
+                            throw e;
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            order.setOrderItems(orderItems);
+
+            // Calculate total amount
+            totalAmount = orderItems.stream()
+                    .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            order.setTotalAmount(totalAmount);
+
+            Order savedOrder = orderRepository.save(order);
+            return mapToOrderResponse(savedOrder);
+        } catch (Exception e) {
+            log.error("Error creating order: {}", e.getMessage());
+            throw e;
         }
-
-        Order order = new Order();
-        order.setCustomerId(orderRequest.getCustomerId());
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus("PENDING");
-
-        BigDecimal totalAmount = BigDecimal.ZERO;
-
-        List<OrderItem> orderItems = orderRequest.getOrderItems().stream()
-                .map(itemDto -> {
-                    // Validate product exists and has enough inventory
-                    ProductDto product = webClientBuilder.build()
-                            .get()
-                            .uri(productServiceUrl + "/api/products/" + itemDto.getProductId())
-                            .retrieve()
-                            .bodyToMono(ProductDto.class)
-                            .block();
-
-                    if (product == null) {
-                        throw new EntityNotFoundException("Product not found with id: " + itemDto.getProductId());
-                    }
-
-                    if (product.getQuantity() < itemDto.getQuantity()) {
-                        throw new IllegalArgumentException("Not enough inventory for product: " + product.getName());
-                    }
-
-                    // Update product inventory
-                    product.setQuantity(product.getQuantity() - itemDto.getQuantity());
-                    webClientBuilder.build()
-                            .put()
-                            .uri(productServiceUrl + "/api/products/" + product.getId())
-                            .bodyValue(product)
-                            .retrieve()
-                            .bodyToMono(ProductDto.class)
-                            .block();
-
-                    OrderItem orderItem = new OrderItem();
-                    orderItem.setProductId(itemDto.getProductId());
-                    orderItem.setQuantity(itemDto.getQuantity());
-                    orderItem.setPrice(product.getPrice());
-                    orderItem.setOrder(order);
-
-                    return orderItem;
-                })
-                .collect(Collectors.toList());
-
-        order.setOrderItems(orderItems);
-
-        // Calculate total amount
-        totalAmount = orderItems.stream()
-                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        order.setTotalAmount(totalAmount);
-
-        Order savedOrder = orderRepository.save(order);
-        return mapToOrderResponse(savedOrder);
     }
 
     @Override
@@ -140,9 +178,13 @@ public class OrderServiceImpl implements OrderService {
 
         // Try to get customer name
         try {
+            String customerUri = UriComponentsBuilder.fromUriString(customerServiceUrl)
+                    .path("/api/customers/" + order.getCustomerId())
+                    .toUriString();
+
             CustomerDto customer = webClientBuilder.build()
                     .get()
-                    .uri(customerServiceUrl + "/api/customers/" + order.getCustomerId())
+                    .uri(customerUri)
                     .retrieve()
                     .bodyToMono(CustomerDto.class)
                     .block();
@@ -151,6 +193,7 @@ public class OrderServiceImpl implements OrderService {
                 response.setCustomerName(customer.getName());
             }
         } catch (Exception e) {
+            log.warn("Could not fetch customer name: {}", e.getMessage());
             // If customer service is not available, continue without customer name
             response.setCustomerName("Unknown");
         }
