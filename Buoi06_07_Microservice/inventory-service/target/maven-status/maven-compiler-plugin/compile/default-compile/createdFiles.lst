@@ -1,0 +1,12 @@
+com\example\inventoryservice\model\InventoryItem$InventoryItemBuilder.class
+com\example\inventoryservice\dto\InventoryResponse$InventoryResponseBuilder.class
+com\example\inventoryservice\dto\InventoryRequest.class
+com\example\inventoryservice\service\InventoryServiceImpl.class
+com\example\inventoryservice\dto\InventoryRequest$InventoryRequestBuilder.class
+com\example\inventoryservice\model\InventoryItem.class
+com\example\inventoryservice\repository\InventoryRepository.class
+com\example\inventoryservice\dto\InventoryResponse.class
+com\example\inventoryservice\service\InventoryService.class
+com\example\inventoryservice\InventoryServiceApplication.class
+com\example\inventoryservice\model\InventoryStatus.class
+com\example\inventoryservice\controller\InventoryController.class

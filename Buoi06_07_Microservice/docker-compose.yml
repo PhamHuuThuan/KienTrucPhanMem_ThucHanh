@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # Discovery Service (Eureka)
+  discovery-service:
+    image: openjdk:11-jdk-slim
+    container_name: discovery-service
+    ports:
+      - "${EUREKA_SERVER_PORT}:8761"
+    volumes:
+      - ./discovery-service/target/discovery-service-1.0-SNAPSHOT.jar:/app/discovery-service.jar
+    command: java -jar /app/discovery-service.jar
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    image: openjdk:11-jdk-slim
+    container_name: api-gateway
+    ports:
+      - "${API_GATEWAY_PORT}:8080"
+    volumes:
+      - ./api-gateway/target/api-gateway-1.0-SNAPSHOT.jar:/app/api-gateway.jar
+    command: java -jar /app/api-gateway.jar
+    networks:
+      - microservices-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+  # Product Service
+  product-service:
+    image: openjdk:11-jdk-slim
+    container_name: product-service
+    volumes:
+      - ./product-service/target/product-service-1.0-SNAPSHOT.jar:/app/product-service.jar
+    command: java -jar /app/product-service.jar
+    networks:
+      - microservices-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+  # Customer Service
+  customer-service:
+    image: openjdk:11-jdk-slim
+    container_name: customer-service
+    volumes:
+      - ./customer-service/target/customer-service-1.0-SNAPSHOT.jar:/app/customer-service.jar
+    command: java -jar /app/customer-service.jar
+    networks:
+      - microservices-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+  # Order Service
+  order-service:
+    image: openjdk:11-jdk-slim
+    container_name: order-service
+    volumes:
+      - ./order-service/target/order-service-1.0-SNAPSHOT.jar:/app/order-service.jar
+    command: java -jar /app/order-service.jar
+    networks:
+      - microservices-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+      customer-service:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+      - PRODUCT_SERVICE_URL=${PRODUCT_SERVICE_URL}
+      - CUSTOMER_SERVICE_URL=${CUSTOMER_SERVICE_URL}
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    networks:
+      - microservices-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+  # Inventory Service
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    networks:
+      - microservices-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+  # Shipping Service
+  shipping-service:
+    build:
+      context: ./shipping-service
+      dockerfile: Dockerfile
+    container_name: shipping-service
+    networks:
+      - microservices-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+networks:
+  microservices-network:
+    driver: bridge 

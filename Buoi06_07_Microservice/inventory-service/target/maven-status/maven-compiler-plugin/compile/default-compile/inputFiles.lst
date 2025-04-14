@@ -1,0 +1,9 @@
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\model\InventoryItem.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\controller\InventoryController.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\service\InventoryServiceImpl.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\dto\InventoryRequest.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\model\InventoryStatus.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\repository\InventoryRepository.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\dto\InventoryResponse.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\InventoryServiceApplication.java
+D:\Learn\FourYear\HK2_KienTrucPM\Thuchanh\KienTrucPhanMem_ThucHanh\Buoi06_07_Microservice\inventory-service\src\main\java\com\example\inventoryservice\service\InventoryService.java

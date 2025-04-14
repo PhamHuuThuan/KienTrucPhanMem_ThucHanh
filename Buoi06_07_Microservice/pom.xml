@@ -17,10 +17,13 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>product-service</module>
-        <module>order-service</module>
-        <module>customer-service</module>
         <module>api-gateway</module>
+        <module>customer-service</module>
+        <module>order-service</module>
+        <module>product-service</module>
+        <module>payment-service</module>
+        <module>inventory-service</module>
+        <module>shipping-service</module>
     </modules>
 
     <properties>
