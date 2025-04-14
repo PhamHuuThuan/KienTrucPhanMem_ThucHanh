@@ -1,8 +1,6 @@
 @echo off
-echo Building all services with Maven...
-call mvn clean package -DskipTests
-
 echo Starting all services with Docker Compose...
+docker-compose down
 docker-compose up -d
 
 echo Services status:
