@@ -4,11 +4,9 @@
 
 ## Kiến trúc Tổng quan
 
-Hệ thống bao gồm 7 microservices được tích hợp với nhau:
+Hệ thống bao gồm 8 microservices được tích hợp với nhau:
 
-![Microservices Architecture](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*7VOyd6UU8iSymJTVVmDdwA.png)
-
-### Core Services
+### Infrastructure Services
 1. **Discovery Service** (Eureka - port 8761)
    - Đăng ký và phát hiện các services
    - Cung cấp giao diện quản lý dịch vụ
@@ -46,20 +44,27 @@ Hệ thống bao gồm 7 microservices được tích hợp với nhau:
    - Theo dõi trạng thái giao hàng
    - Tạo mã vận đơn và tracking
 
-## Tương tác giữa các Service
+## Business Flow Tích Hợp
 
-Các service tương tác với nhau để hoàn thiện business flow:
+Mô hình tích hợp giữa 6 domain services:
 
-1. **Flow đặt hàng**:
-   - Customer tạo đơn hàng → Order Service
+1. **Quy trình đặt hàng**:
+   - Khách hàng đăng nhập → Customer Service xác thực
+   - Khách hàng chọn sản phẩm → Product Service cung cấp thông tin
+   - Khách hàng tạo đơn hàng → Order Service lưu đơn hàng
    - Order Service kiểm tra tồn kho → Inventory Service
-   - Order Service khởi tạo thanh toán → Payment Service
-   - Khi thanh toán hoàn tất → Shipping Service chuẩn bị giao hàng
+   - Order Service yêu cầu thanh toán → Payment Service xử lý
+   - Sau khi thanh toán → Shipping Service tạo đơn vận chuyển
 
-2. **Flow thanh toán**:
-   - Payment Service xử lý giao dịch
-   - Cập nhật trạng thái đơn hàng → Order Service
-   - Cập nhật tồn kho → Inventory Service
+2. **Quy trình quản lý tồn kho**:
+   - Đơn hàng được xác nhận → Inventory Service giảm số lượng tồn kho
+   - Đơn hàng hủy → Inventory Service hoàn tồn kho
+   - Nhập kho → Inventory Service cập nhật số lượng mới
+
+3. **Quy trình vận chuyển và theo dõi**:
+   - Đơn hàng đã thanh toán → Shipping Service tạo vận đơn
+   - Cập nhật trạng thái → Shipping Service ghi nhận
+   - Giao hàng thành công → Order Service cập nhật trạng thái đơn
 
 ## Công nghệ sử dụng
 
@@ -133,72 +138,151 @@ Tất cả API đều được định tuyến qua API Gateway (http://localhost
 
 ### Sử dụng Docker Compose
 
-1. Khởi động tất cả services:
+1. Đảm bảo bạn đã cài đặt Docker và Docker Compose trên máy.
+
+2. Clone repository:
+   ```
+   git clone <repository-url>
+   cd <repository-folder>
+   ```
+
+3. Build các service (optional, Docker Compose sẽ tự build nếu cần):
+   ```
+   mvn clean package -DskipTests
+   ```
+
+4. Khởi động tất cả services:
    ```
    docker-compose down
    docker-compose up -d
    ```
-   hoặc sử dụng script có sẵn:
+   hoặc sử dụng script có sẵn (nếu có):
    ```
+   # Windows
    ./run-all-services.cmd
+   
+   # Linux/Mac (đảm bảo file có quyền thực thi)
+   chmod +x ./run-all-services.sh
+   ./run-all-services.sh
    ```
 
-2. Kiểm tra status của các services trong Eureka:
+5. Kiểm tra status của các services trong Eureka:
    http://localhost:8761
 
-   Tất cả 7 services sau phải được hiển thị trong Eureka:
+   Các services sau phải được hiển thị trong Eureka:
+   - API-GATEWAY
    - PRODUCT-SERVICE
    - CUSTOMER-SERVICE
    - ORDER-SERVICE
    - PAYMENT-SERVICE
    - INVENTORY-SERVICE
    - SHIPPING-SERVICE
-   - API-GATEWAY
 
-3. Truy cập services thông qua API Gateway:
+6. Truy cập services thông qua API Gateway:
    http://localhost:8080/api/{service-endpoint}
 
-4. Kiểm tra logs của service:
+7. Kiểm tra logs của service:
    ```
    docker-compose logs -f [service-name]
    ```
    Ví dụ: `docker-compose logs -f payment-service`
 
-5. Dừng tất cả services:
+8. Dừng tất cả services:
    ```
    docker-compose down
    ```
 
+9. Nếu bạn muốn xóa volumes (dữ liệu MySQL) khi dừng:
+   ```
+   docker-compose down -v
+   ```
+
+### Chạy thủ công (không dùng Docker)
+
+1. Đảm bảo bạn đã cài đặt:
+   - JDK 11
+   - Maven
+   - MySQL 8.0
+
+2. Cấu hình các database MySQL:
+   ```sql
+   CREATE DATABASE productdb;
+   CREATE DATABASE customerdb;
+   CREATE DATABASE orderdb;
+   CREATE DATABASE paymentdb;
+   CREATE DATABASE inventorydb;
+   CREATE DATABASE shippingdb;
+   ```
+
+3. Cập nhật application.properties của mỗi service với thông tin kết nối MySQL local:
+   ```
+   spring.datasource.url=jdbc:mysql://localhost:3306/{tên_database}
+   spring.datasource.username=root
+   spring.datasource.password=password
+   ```
+
+4. Khởi động các service theo thứ tự:
+   - Discovery Service (Eureka Server)
+   - Các service khác
+   - API Gateway (cuối cùng)
+
+5. Mỗi service có thể khởi động bằng lệnh:
+   ```
+   cd <service-folder>
+   mvn spring-boot:run
+   ```
+
 ## Cấu trúc Dữ liệu
 
-Mỗi service sử dụng database H2 in-memory riêng biệt:
+Mỗi service sử dụng database MySQL riêng biệt:
 
-- Product Service: H2 DB - productdb
-- Customer Service: H2 DB - customerdb
-- Order Service: H2 DB - orderdb
-- Payment Service: H2 DB - paymentdb
-- Inventory Service: H2 DB - inventorydb
-- Shipping Service: H2 DB - shippingdb
+- Product Service: MySQL - productdb
+- Customer Service: MySQL - customerdb
+- Order Service: MySQL - orderdb
+- Payment Service: MySQL - paymentdb
+- Inventory Service: MySQL - inventorydb
+- Shipping Service: MySQL - shippingdb
 
-H2 Console có thể truy cập tại: http://localhost:8080/{service-path}/h2-console
-Ví dụ: http://localhost:8080/api/payments/h2-console
+Các bảng dữ liệu sẽ được tự động tạo với JPA/Hibernate khi khởi động service lần đầu.
 
 ## Testing với Postman
 
-Sử dụng Postman Collection đính kèm để test tất cả các endpoints. Collection bao gồm các request cho tất cả 7 services.
+Sử dụng Postman Collection đính kèm để test tất cả các endpoints. Collection bao gồm các request cho tất cả 6 domain services.
 
 ## Troubleshooting
 
 1. **Service không xuất hiện trong Eureka**:
    - Kiểm tra logs: `docker-compose logs -f [service-name]`
-   - Đảm bảo không có conflict port giữa các container
-   - Kiểm tra cấu hình EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+   - Đảm bảo trong file Java Application của service có annotation `@EnableDiscoveryClient`
+   - Đảm bảo trong pom.xml có dependency `spring-cloud-starter-netflix-eureka-client`
+   - Kiểm tra cấu hình eureka.client.serviceUrl.defaultZone trong application.yml
+   - Thử khởi động lại service: `docker-compose restart [service-name]`
 
-2. **Không thể truy cập API thông qua Gateway**:
-   - Kiểm tra nếu gateway được đăng ký trong Eureka
-   - Kiểm tra cấu hình routes trong API Gateway
-   - Đảm bảo service endpoint đúng
+2. **API Gateway không thể kết nối đến service**:
+   - Kiểm tra trong API Gateway cấu hình route sử dụng tên service (không phải localhost)
+   - Đảm bảo port trong cấu hình route khớp với port của service
+   - Kiểm tra logs API Gateway: `docker-compose logs -f api-gateway`
 
-3. **Lỗi kết nối giữa các services**:
-   - Đảm bảo tất cả services đều trong cùng network
-   - Kiểm tra URL service sử dụng để gọi service khác
+3. **Không thể gọi service thông qua API Gateway**:
+   - Đảm bảo service đã đăng ký thành công với Eureka
+   - Kiểm tra cấu hình route trong API Gateway
+   - Kiểm tra logs response từ API Gateway
+
+4. **Lỗi phân giải tên service**:
+   - Đảm bảo tất cả containers đều nằm trong cùng một network
+   - Kiểm tra cấu hình dns trong network Docker
+
+5. **Lỗi kết nối đến database**:
+   - Kiểm tra logs service: `docker-compose logs -f [service-name]`
+   - Đảm bảo containers MySQL đã khởi động thành công: `docker-compose ps`
+   - Kiểm tra kết nối đến database từ bên trong container:
+     ```
+     docker-compose exec [service-name] bash
+     ping [db-container-name]
+     ```
+   - Nếu sử dụng cách chạy thủ công, đảm bảo MySQL local đang chạy và các database đã được tạo
+
+6. **Vấn đề về volume hoặc dữ liệu MySQL**:
+   - Kiểm tra volumes đã được tạo: `docker volume ls`
+   - Xóa và tạo lại volume nếu cần: `docker-compose down -v` sau đó `docker-compose up -d`
+   - Đảm bảo schema đã được tạo trong các database (mặc định JPA sẽ tự tạo)
